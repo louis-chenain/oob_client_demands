@@ -1,5 +1,5 @@
 # ==========================================
-# CLIENT MANAGEMENT - EDUCATIONAL VERSION
+# CLIENT MANAGEMENT - EDUCATIONAL VERSION !
 # ==========================================
 # This script manages client data in a text file.
 # Students: Notice how the code is grouped into logical sections.
