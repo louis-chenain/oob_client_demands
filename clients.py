@@ -9,15 +9,17 @@ FILENAME = "clients.txt"
 
 # --- 1. INITIALIZATION ---
 # Check if the file exists, if not, create it with a header.
-try:
-    file_check = open(FILENAME, "r")
-    file_check.close()
-except FileNotFoundError:
-    print("Initializing database...")
-    database = open(FILENAME, "w")
-    database.write("id,name,email\n")
-    database.close()
-
+def init_db(filename = FILENAME):
+    try:
+        with open(FILENAME, "r"):
+            pass
+        return False
+    except FileNotFoundError:
+        with open(FILENAME, "w") as f:
+            f.write("id,name,email\n")
+        return True
+created = init_db()
+print("DB created?" , created)
 # --- 2. MAIN MENU LOOP ---
 while True:
     print("\n" + "="*25)
