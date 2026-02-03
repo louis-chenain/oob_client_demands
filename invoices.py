@@ -1,77 +1,85 @@
-# ==========================================
-# INVOICE MANAGEMENT - EDUCATIONAL VERSION
-# ==========================================
-# This script manages income from client invoices.
-# Notice the repetitive pattern of opening and closing files.
-# In a functional version, you would create a function for file operations!
+import os
+from typing import List, Optional, Callable, Dict
 
-FILENAME = "invoices.txt"
+FILENAME: str = "invoices.txt"
+HEADER: str = "id,client_id,amount,date,description\n"
 
-# --- 1. INITIALIZATION ---
-try:
-    file_test = open(FILENAME, "r")
-    file_test.close()
-except FileNotFoundError:
-    init_db = open(FILENAME, "w")
-    init_db.write("id,client_id,amount,date,description\n")
-    init_db.close()
+# --- 1. DATA ACCESS ---
 
-# --- 2. MAIN LOOP ---
-while True:
-    print("\n" + "!"*25)
-    print("   INVOICE TRACKER")
-    print("!"*25)
-    print("1. Create New Invoice")
-    print("2. List All Invoices")
-    print("3. Exit Tracker")
+def read_lines(filename: str) -> List[str]:
+    if not os.path.exists(filename):
+        with open(filename, "w") as f:
+            f.write(HEADER)
+        return [HEADER]
+    with open(filename, "r") as f:
+        return f.readlines()
+
+def append_line(filename: str, data_row: str) -> None:
+    with open(filename, "a") as f:
+        f.write(data_row)
+
+# --- 2. PURE LOGIC ---
+
+def format_invoice_string(invoice_id: int, details: List[str]) -> str:
+    """Uses type hints to ensure we receive an int and a list of strings."""
+    return f"{invoice_id},{','.join(details)}\n"
+
+def parse_invoice_line(line: str) -> Optional[str]:
+    """Returns a string if valid, or None if the line is corrupt/header."""
+    parts = line.strip().split(",")
+    if len(parts) < 5 or parts[0] == "id": 
+        return None
+    return f"INV #{parts[0]} | Client {parts[1]} | ${parts[2]} | {parts[3]} | {parts[4]}"
+
+# --- 3. RECURSIVE INTERFACE ---
+
+def main_menu() -> None:
+    """The main interface, now driven by recursion instead of a while loop."""
     
-    choice = input("Selection: ")
+    print(f"\n{'!'*25}\n   INVOICE TRACKER\n{'!'*25}")
+    print("1. Create New Invoice\n2. List All Invoices\n3. Exit")
+    
+    choice: str = input("Selection: ")
 
-    # --- 3. ADD INVOICE SECTION ---
-    if choice == '1':
-        print("\nEnter invoice details:")
-        client_id = input("- Client ID: ")
-        amount = input("- Amount (e.g. 150.50): ")
-        date = input("- Date (YYYY-MM-DD): ")
-        desc = input("- Description: ")
-        
-        # Calculate ID
-        file_read = open(FILENAME, "r")
-        all_lines = file_read.readlines()
-        file_read.close()
-        new_id = len(all_lines)
-        
-        # Save to file
-        file_append = open(FILENAME, "a")
-        # Format: id,client_id,amount,date,description
-        data_string = str(new_id) + "," + client_id + "," + amount + "," + date + "," + desc + "\n"
-        file_append.write(data_string)
-        file_append.close()
-        
-        print(f"Invoice #{new_id} saved successfully.")
+    # Define the dispatch table with type hinting for the values
+    actions: Dict[str, Callable[[], None]] = {
+        '1': handle_create,
+        '2': handle_list,
+        '3': lambda: print("Exiting...")
+    }
 
-    # --- 4. LIST INVOICES SECTION ---
-    elif choice == '2':
-        print("\n--- INVOICE HISTORY ---")
-        
-        file_view = open(FILENAME, "r")
-        header = file_view.readline() # Burn the header
-        
-        current_data = file_view.readline()
-        while current_data:
-            # Use split to break the CSV line into a list
-            parts = current_data.strip().split(",")
-            
-            if len(parts) >= 5:
-                print(f"INV #{parts[0]} | Client {parts[1]} | ${parts[2]} | {parts[3]} | {parts[4]}")
-            
-            current_data = file_view.readline()
-            
-        file_view.close()
-        print("-----------------------\n")
-
-    elif choice == '3':
-        print("Exiting...")
-        break
+    # Execute selection
+    if choice in actions:
+        actions[choice]()
+        # RECURSION: If not exiting, call main_menu again to "loop"
+        if choice != '3':
+            main_menu()
     else:
-        print("Try again.")
+        print("Invalid Selection.")
+        main_menu()
+
+# --- 4. ACTION HANDLERS ---
+
+def handle_create() -> None:
+    inputs: List[str] = [
+        input("- Client ID: "),
+        input("- Amount: "),
+        input("- Date (YYYY-MM-DD): "),
+        input("- Description: ")
+    ]
+    new_id: int = len(read_lines(FILENAME))
+    append_line(FILENAME, format_invoice_string(new_id, inputs))
+    print(f"Invoice #{new_id} saved.")
+
+def handle_list() -> None:
+    print("\n--- INVOICE HISTORY ---")
+    lines: List[str] = read_lines(FILENAME)
+    # Using map/filter for a declarative data pipeline
+    display_items = filter(None, map(parse_invoice_line, lines))
+    
+    # We use a simple for-loop here for printing (I/O side effect)
+    for item in display_items:
+        print(item)
+
+if __name__ == "__main__":
+    main_menu()
