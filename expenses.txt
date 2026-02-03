@@ -1,2 +1,2 @@
 id,category,amount,date,description
-1,Supplies,50.0,2026-01-27,New Expense
+1,Supplies,50.0,2026-01-27,New Expense2,supplies,340,2026-02-01,old expense
