@@ -8,49 +8,35 @@
 INVOICE_DATA = "invoices.txt"
 EXPENSE_DATA = "expenses.txt"
 
+def sum_csv_column(filename, column_index):
+    """Sums the values in a specific column of a CSV file, skipping the header.
+    Handles file not found and invalid numbers gracefully."""
+    total = 0.0
+    try:
+        with open(filename, "r") as f:
+            lines = f.readlines()
+        for line in lines[1:]:  # Skip header
+            parts = line.strip().split(",")
+            if len(parts) > column_index:
+                try:
+                    total += float(parts[column_index])
+                except ValueError:
+                    print(f"Warning: Invalid number in {filename}: '{parts[column_index]}' - skipping this line.")
+    except FileNotFoundError:
+        print(f"[!] No file found: {filename}. Total is $0.")
+    return total
+
 # Initialize our totals
 income_total = 0.0
 expense_total = 0.0
 
 # --- 1. PROCESS INCOMES (INVOICES) ---
 print("Reading Invoice data...")
-try:
-    inv_file = open(INVOICE_DATA, "r")
-    # Skip the line with the words "id,client_id,amount..."
-    inv_file.readline() 
-    
-    line = inv_file.readline()
-    while line:
-        # Step: Extract the amount from the line
-        parts = line.strip().split(",")
-        if len(parts) >= 3:
-            amount_str = parts[2]
-            income_total = income_total + float(amount_str)
-        line = inv_file.readline()
-        
-    inv_file.close()
-except FileNotFoundError:
-    print("[!] No invoice file found. Total income is $0.")
+income_total = sum_csv_column(INVOICE_DATA, 2)
 
 # --- 2. PROCESS OUTGOINGS (EXPENSES) ---
 print("Reading Expense data...")
-try:
-    exp_file = open(EXPENSE_DATA, "r")
-    # Skip header
-    exp_file.readline()
-    
-    line = exp_file.readline()
-    while line:
-        # Step: Extract the amount
-        parts = line.strip().split(",")
-        if len(parts) >= 3:
-            amount_str = parts[2]
-            expense_total = expense_total + float(amount_str)
-        line = exp_file.readline()
-        
-    exp_file.close()
-except FileNotFoundError:
-    print("[!] No expense file found. Total expenses are $0.")
+expense_total = sum_csv_column(EXPENSE_DATA, 2)
 
 # --- 3. FINAL CALCULATION ---
 profit_or_loss = income_total - expense_total
