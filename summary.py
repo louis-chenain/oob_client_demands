@@ -14,21 +14,18 @@ def sum_csv_column(filename, column_index):
     total = 0.0
     try:
         with open(filename, "r") as f:
-            lines = f.readlines()
-        for line in lines[1:]:  # Skip header
-            parts = line.strip().split(",")
-            if len(parts) > column_index:
-                try:
-                    total += float(parts[column_index])
-                except ValueError:
-                    print(f"Warning: Invalid number in {filename}: '{parts[column_index]}' - skipping this line.")
+            for i, line in enumerate(f):
+                if i == 0:  # Skip header
+                    continue
+                parts = line.strip().split(",")
+                if len(parts) > column_index:
+                    try:
+                        total += float(parts[column_index])
+                    except ValueError:
+                        print(f"Warning: Invalid number in {filename}: '{parts[column_index]}' - skipping this line.")
     except FileNotFoundError:
         print(f"[!] No file found: {filename}. Total is $0.")
     return total
-
-# Initialize our totals
-income_total = 0.0
-expense_total = 0.0
 
 # --- 1. PROCESS INCOMES (INVOICES) ---
 print("Reading Invoice data...")
